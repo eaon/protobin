@@ -346,6 +346,15 @@ fn single_or_raw_bit_array() -> Decoder(BitArray) {
   single_or_raw(of: decode.bit_array, named: "BitArray", default: <<>>)
 }
 
+/// Decode a `bytes` field. The result is guaranteed to be byte-aligned.
+pub fn decode_bytes() -> Decoder(BitArray) {
+  use bits <- decode.then(single_or_raw_bit_array())
+  case bits {
+    <<_:bytes>> -> decode.success(bits)
+    _ -> decode.failure(<<>>, "Bytes")
+  }
+}
+
 pub fn decode_protobuf(
   // Passed as a function so recursive decoders are easier
   using decoder: fn() -> Decoder(t),

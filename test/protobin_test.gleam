@@ -282,6 +282,47 @@ pub fn ignore_groups_test() {
     )
 }
 
+type BytesFields {
+  BytesFields(data: BitArray, tag: BitArray)
+}
+
+fn bytes_fields_decoder() -> Decoder(BytesFields) {
+  use data <- decode.field(3, protobin.decode_bytes())
+  use tag <- decode.field(9, protobin.decode_bytes())
+  BytesFields(data:, tag:) |> decode.success
+}
+
+pub fn bytes_fields_test() {
+  let bits = <<
+    // field 3
+    0x1a,
+    0x03,
+    0x01,
+    0x02,
+    0x03,
+    // field 9
+    0x4a,
+    0x04,
+    0x0a,
+    0x0b,
+    0x0c,
+    0x0d,
+  >>
+  let assert Ok(parsed) = parse(from: bits, using: bytes_fields_decoder())
+
+  assert parsed
+    == Parsed(
+      value: BytesFields(data: <<0x01, 0x02, 0x03>>, tag: <<
+        0x0a,
+        0x0b,
+        0x0c,
+        0x0d,
+      >>),
+      rest: <<>>,
+      pos: 11,
+    )
+}
+
 pub fn does_not_ignore_groups_test() {
   let path = "./test/ignores-groups.pb"
   let assert Ok(bits) = file.read_bits(from: path)
